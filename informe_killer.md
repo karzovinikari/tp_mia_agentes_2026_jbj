@@ -87,7 +87,7 @@ En ese caso `answer` queda vacío, `steps` conserva la traza completa de lo ejec
 1. **Stateless:** `run()` no recuerda turnos anteriores; cada llamada es una conversación nueva.
 2. **`max_history_messages` ignorado:** el historial puede crecer sin recorte dentro de un `run` largo.
 3. **Tokens no acumulados:** `AgentResult.input_tokens` / `output_tokens` quedan en `None`; no se suman los tokens de cada `LLMResponse`
-4. **Sin reintentos:** si `chat()` falla por error de red/API, la excepción se propaga. M1 no requiere resiliencia.
+4. **Sin reintentos:** si `chat()` falla por error de red/API, la excepción se propaga.
 5. **`structured_call` no implementado:** es un stub con `NotImplementedError`.
 6. **`file_reader` sin sandbox:** lee cualquier path accesible del filesystem, sin restricción de directorio.
 7. **Errores de tool como string:** división por cero o archivo inexistente devuelven `"Error: ..."` en vez de fallar; el agente no distingue ese string de un resultado legítimo.
