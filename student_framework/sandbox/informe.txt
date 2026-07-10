@@ -1,0 +1,9 @@
+Informe de ejemplo del sandbox.
+
+Este archivo existe para que el ejemplo de recuperación del lector de
+archivos (sección 5 del informe_killer_m2.md) sea reproducible: si el LLM
+pide una ruta inexistente como 'reporte.txt', file_reader devuelve un
+error accionable que lista los archivos disponibles acá (incluido este
+'informe.txt'), y el modelo puede reintentar con el nombre correcto.
+
+Dato de prueba: el código es ALFA-7.
