@@ -2,3 +2,7 @@
 **/.venv/
 **/__pycache__/
 **/.DS_Store
+
+# Secretos: nunca subir el .env con keys reales (sí se versiona .env.example)
+**/.env
+.env

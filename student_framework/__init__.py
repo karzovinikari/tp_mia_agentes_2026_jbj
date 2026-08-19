@@ -31,8 +31,20 @@ def build_agent(config: dict[str, Any] | None = None) -> Agent:
     llm = config.get("llm_client") or LLMClient.from_env() #NO CAMBIAR
     kwargs: dict[str, Any] = {"llm_client": llm} #NO CAMBIAR
     
-    if "max_history_messages" in config:
-        kwargs["max_history_messages"] = config["max_history_messages"]
+    # Reenvío de los demás parámetros que MyAgent.__init__ ya acepta (M3:
+    # la infraestructura de evaluación en eval/ los necesita para variar
+    # max_iterations/system_prompt entre experimentos sin tocar este
+    # archivo). No cambia el comportamiento por defecto: si config no trae
+    # estas claves, kwargs queda igual que antes.
+    for key in (
+        "max_history_messages",
+        "max_iterations",
+        "system_prompt",
+        "max_retries",
+        "retry_base_delay",
+    ):
+        if key in config:
+            kwargs[key] = config[key]
 
     agent = MyAgent(**kwargs)
 

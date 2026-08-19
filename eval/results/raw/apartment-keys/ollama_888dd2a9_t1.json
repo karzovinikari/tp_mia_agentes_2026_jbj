@@ -1,0 +1,197 @@
+{
+  "trial_id": "apartment-keys__ollama__888dd2a9__t1",
+  "scenario_id": "apartment-keys",
+  "difficulty": "medium",
+  "provider": "ollama",
+  "module": "student_framework",
+  "framework_config": {
+    "system_prompt": "Sos un agente que intenta escapar de una sala simulada. Tenés las herramientas look, examine, take, use (y go si hay navegación entre salas). Antes de actuar a ciegas, usá look para ver qué hay en la sala. No hay mapa: si navegás entre salas, llevá vos mismo la cuenta de dónde encontraste cada objeto para poder volver. Si el objetivo pide un orden (por ejemplo, llevarte algo ANTES de abrir una puerta que se sella), planificá ese orden antes de actuar, no lo improvises. Si una acción devuelve un error, no la repitas igual: leé el error y cambiá el argumento o el enfoque.",
+    "max_history_messages": 8,
+    "max_iterations": 25
+  },
+  "harness_options": {
+    "noop_m1_tools": false
+  },
+  "trial_index": 1,
+  "timestamp": "2026-08-11T20:51:18",
+  "wall_time_s": 54.80026870779693,
+  "crashed": false,
+  "crash_message": null,
+  "agent_result": {
+    "answer": "",
+    "steps": [
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Recibidor.\nUn recibidor estrecho con un perchero vacío y un espejo polvoriento. La puerta principal, de metal, está cerrada con una cerradura simple. Un pasillo se abre hacia el norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Pasillo.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Pasillo.\nUn pasillo en penumbra con cuadros torcidos. Conecta el recibidor al sur con la cocina al este.\nNo ves nada de interés.\nSalidas: este, sur.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"sur\"}",
+        "tool_output": "Caminas hacia sur. Llegas a Recibidor.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Recibidor.\nUn recibidor estrecho con un perchero vacío y un espejo polvoriento. La puerta principal, de metal, está cerrada con una cerradura simple. Un pasillo se abre hacia el norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"puerta_principal\"}",
+        "tool_output": "Error: puerta principal no es algo que puedas llevarte.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Pasillo.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Pasillo.\nUn pasillo en penumbra con cuadros torcidos. Conecta el recibidor al sur con la cocina al este.\nNo ves nada de interés.\nSalidas: este, sur.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"este\"}",
+        "tool_output": "Caminas hacia este. Llegas a Cocina.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Cocina.\nUna cocina pequeña con azulejos blancos. Hay una mesada con un cajón cerrado y olor a café frío.\nVes:\n  - cajón de la cocina [id: cajon]\nSalidas: oeste.",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"cajon\"}",
+        "tool_output": "Error: cajón de la cocina no es algo que puedas llevarte.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"cajon\"}",
+        "tool_output": "cajón de la cocina: Un cajón de madera bajo la mesada. Se abre con un tirón y dentro hay cubiertos sueltos y algo más.\nContiene:\n  - llave dorada [id: llave_oro]",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"llave_oro\"}",
+        "tool_output": "Tomas llave dorada.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"oeste\"}",
+        "tool_output": "Caminas hacia oeste. Llegas a Pasillo.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"oeste\"}",
+        "tool_output": "Error: no hay salida 'oeste' desde aquí. Salidas disponibles: este, sur.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"este\"}",
+        "tool_output": "Caminas hacia este. Llegas a Cocina.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"west\"}",
+        "tool_output": "Error: no hay salida 'west' desde aquí. Salidas disponibles: oeste.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"west\"}",
+        "tool_output": "Error: no hay salida 'west' desde aquí. Salidas disponibles: oeste.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Cocina.\nUna cocina pequeña con azulejos blancos. Hay una mesada con un cajón cerrado y olor a café frío.\nVes:\n  - cajón de la cocina [id: cajon]\nSalidas: oeste.\nLlevas: llave dorada [id: llave_oro].",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Cocina.\nUna cocina pequeña con azulejos blancos. Hay una mesada con un cajón cerrado y olor a café frío.\nVes:\n  - cajón de la cocina [id: cajon]\nSalidas: oeste.\nLlevas: llave dorada [id: llave_oro].",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"cajon\"}",
+        "tool_output": "cajón de la cocina: Un cajón de madera bajo la mesada. Se abre con un tirón y dentro hay cubiertos sueltos y algo más.\nEstá vacío.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"east\"}",
+        "tool_output": "Error: no hay salida 'east' desde aquí. Salidas disponibles: oeste.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"oeste\"}",
+        "tool_output": "Caminas hacia oeste. Llegas a Pasillo.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Pasillo.\nUn pasillo en penumbra con cuadros torcidos. Conecta el recibidor al sur con la cocina al este.\nNo ves nada de interés.\nSalidas: este, sur.\nLlevas: llave dorada [id: llave_oro].",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"south\"}",
+        "tool_output": "Error: no hay salida 'south' desde aquí. Salidas disponibles: este, sur.",
+        "error": null
+      }
+    ],
+    "error": "Se alcanzó el límite de 25 iteraciones sin respuesta final.",
+    "input_tokens": 32550,
+    "output_tokens": 989
+  },
+  "tool_call_count": 25,
+  "optimal_calls": 7,
+  "goal": {
+    "type": "item_open",
+    "item": "puerta_principal"
+  },
+  "goal_achieved": false,
+  "goal_reason": "puerta principal está cerrada",
+  "event_log": [
+    "enter:recibidor",
+    "enter:pasillo",
+    "enter:recibidor",
+    "enter:pasillo",
+    "enter:cocina",
+    "take:llave_oro",
+    "enter:pasillo",
+    "enter:cocina",
+    "enter:pasillo"
+  ]
+}
