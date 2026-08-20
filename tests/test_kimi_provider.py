@@ -60,7 +60,7 @@ def recorder() -> _Recorder:
 
 @pytest.fixture
 def provider(recorder: _Recorder) -> KimiProvider:
-    p = KimiProvider(api_key="test-key", model="kimi-k2-0711-preview")
+    p = KimiProvider(api_key="test-key", model="kimi-k2-0711-preview", min_interval_s=0)
     p._client = httpx.Client(
         base_url="https://api.moonshot.ai/v1",
         headers=dict(p._client.headers),
@@ -125,11 +125,52 @@ def test_empty_content_becomes_none(provider: KimiProvider, recorder: _Recorder)
     assert result.content is None
 
 
-def test_http_error_raises(provider: KimiProvider, recorder: _Recorder) -> None:
+def test_http_error_raises(
+    provider: KimiProvider, recorder: _Recorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "student_framework.kimi_provider._RATE_LIMIT_WAIT_S", 0.0
+    )
     recorder.status_code = 429
     recorder.response_json = {"error": {"message": "rate limited"}}
     with pytest.raises(httpx.HTTPStatusError, match="429"):
         provider.chat(messages=[{"role": "user", "content": "x"}])
+
+
+def test_non_429_http_error_raises_immediately(
+    provider: KimiProvider, recorder: _Recorder
+) -> None:
+    recorder.status_code = 500
+    recorder.response_json = {"error": {"message": "server error"}}
+    with pytest.raises(httpx.HTTPStatusError, match="500"):
+        provider.chat(messages=[{"role": "user", "content": "x"}])
+
+
+def test_429_then_success_recovers(
+    provider: KimiProvider, recorder: _Recorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "student_framework.kimi_provider._RATE_LIMIT_WAIT_S", 0.0
+    )
+    calls = {"n": 0}
+    real_call = recorder.__call__
+
+    def flaky(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            recorder.status_code = 429
+        else:
+            recorder.status_code = 200
+        return real_call(request)
+
+    provider._client = httpx.Client(
+        base_url="https://api.moonshot.ai/v1",
+        headers=dict(provider._client.headers),
+        transport=httpx.MockTransport(flaky),
+    )
+    result = provider.chat(messages=[{"role": "user", "content": "x"}])
+    assert result.content == "ok"
+    assert calls["n"] == 2
 
 
 # ---------------------------------------------------------------------------

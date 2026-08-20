@@ -4,21 +4,23 @@
 
 | arm | n | success (micro) | success (macro) | eficiencia media | top error |
 |---|---:|---:|---:|---:|---|
-| 10 | 12 | 0% | 0% | — | max_iterations_exhausted |
-| 15 | 12 | 0% | 0% | — | max_iterations_exhausted |
-| 25 | 12 | 17% | 17% | 0.50 | unclassified |
+| 10 | 12 | 0% | 0% | — | unrecovered_tool_error |
+| 15 | 12 | 0% | 0% | — | unrecovered_tool_error |
+| 25 | 12 | 0% | 0% | — | unrecovered_tool_error |
 
 ## Desglose de errores por arm
 
 ### arm = 10
-- max_iterations_exhausted: 12
+- unrecovered_tool_error: 8
+- max_iterations_exhausted: 4
 
 ### arm = 15
-- max_iterations_exhausted: 11
+- unrecovered_tool_error: 7
+- max_iterations_exhausted: 4
 - unclassified: 1
 
 ### arm = 25
-- unclassified: 6
+- unrecovered_tool_error: 8
 - max_iterations_exhausted: 3
-- unrecovered_tool_error: 1
+- unclassified: 1
 

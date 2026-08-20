@@ -24,12 +24,29 @@ Nota sobre `response_format`: Moonshot solo soporta modo JSON (`{"type":
 "json_object"}`), no JSON Schema estricto. Si se pasa `response_format`,
 se activa ese modo, pero la validación del schema sigue siendo
 responsabilidad del agente (como ya ocurre con `BedrockProvider`).
+
+Throttling: la cuenta usada durante M3 devolvió 429 (rate limit) incluso
+después de los reintentos con backoff del agente (M2) — parece ser una
+ventana corta (~30-40s) con cupo bajo, no un simple "N por minuto"
+(medido empíricamente: 10s de espaciado falla ~1 de cada 6 llamadas).
+Por eso `chat()` combina dos mecanismos:
+
+  1. Espaciado mínimo entre llamadas salientes (`KIMI_MIN_INTERVAL_S`,
+     default 12s), compartido entre todas las instancias del proceso —
+     un `build_agent` nuevo por trial (como hace `eval/runner.py`) no
+     debe resetear el throttling.
+  2. Reintento propio ante 429 con espera fija de `_RATE_LIMIT_WAIT_S`
+     (40s, bastante más que el backoff corto de M2) antes de propagar el
+     error — M2 sigue teniendo su propio retry por encima como red
+     adicional para otros errores transitorios.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import threading
+import time
 import uuid
 from typing import Any
 
@@ -42,6 +59,8 @@ ToolSpecInput = ToolSchema | dict[str, Any]
 
 _DEFAULT_MODEL = "kimi-k2-0711-preview"
 _DEFAULT_BASE_URL = "https://api.moonshot.ai/v1"
+_RATE_LIMIT_MAX_RETRIES = 2
+_RATE_LIMIT_WAIT_S = 40.0
 
 
 def _tool_specs_as_dicts(tools: list[ToolSpecInput] | None) -> list[dict[str, Any]]:
@@ -67,6 +86,12 @@ def _arguments_to_dict(raw_args: Any) -> dict[str, Any]:
 class KimiProvider:
     """Cliente nativo para la API de Kimi (Moonshot AI)."""
 
+    # Compartido entre TODAS las instancias del proceso: un sweep de eval
+    # crea un `KimiProvider` nuevo por trial, así que el throttle no puede
+    # vivir en `self` o se resetea en cada trial y deja de proteger nada.
+    _throttle_lock = threading.Lock()
+    _last_request_at: float = 0.0
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -74,11 +99,17 @@ class KimiProvider:
         base_url: str | None = None,
         max_tokens: int = 4096,
         timeout: float = 60.0,
+        min_interval_s: float | None = None,
     ) -> None:
         # Levanta configuración de un `.env` (mismo mecanismo que
         # `LLMClient.from_env()` usa para Bedrock/Ollama), sin pisar
         # variables ya presentes en el entorno real.
         load_env_files()
+        self._min_interval_s = (
+            min_interval_s
+            if min_interval_s is not None
+            else float(os.environ.get("KIMI_MIN_INTERVAL_S", "12.0"))
+        )
         self._api_key = (
             api_key
             or os.environ.get("KIMI_API_KEY")
@@ -121,11 +152,50 @@ class KimiProvider:
             # Moonshot no soporta JSON Schema estricto; solo modo JSON.
             body["response_format"] = {"type": "json_object"}
 
-        resp = self._client.post("/chat/completions", json=body)
-        resp.raise_for_status()
-        return self._to_llm_response(resp.json())
+        return self._to_llm_response(self._post_with_rate_limit_retry(body))
+
+    def _post_with_rate_limit_retry(self, body: dict[str, Any]) -> dict[str, Any]:
+        """POST con reintento propio ante 429, además del retry de M2.
+
+        El 429 de esta cuenta parece ser una ventana corta (~30-40s) con
+        cupo bajo, no un simple "N por minuto": el backoff corto de M2
+        (`retry_base_delay · 2^intento`, con default 0.5s) no alcanza a
+        esperar que la ventana libere cupo. Acá esperamos `_RATE_LIMIT_WAIT_S`
+        fijo — mucho más que el backoff de M2 — antes de reintentar, y solo
+        para 429 (cualquier otro error HTTP se propaga tal cual para que M2
+        decida si es transitorio).
+        """
+        last_exc: httpx.HTTPStatusError | None = None
+        for attempt in range(_RATE_LIMIT_MAX_RETRIES + 1):
+            self._throttle()
+            resp = self._client.post("/chat/completions", json=body)
+            if resp.status_code != 429:
+                resp.raise_for_status()
+                return resp.json()
+            last_exc = httpx.HTTPStatusError(
+                f"Client error '429 Too Many Requests' for url {resp.url!r}",
+                request=resp.request,
+                response=resp,
+            )
+            if attempt < _RATE_LIMIT_MAX_RETRIES:
+                time.sleep(_RATE_LIMIT_WAIT_S)
+        assert last_exc is not None
+        raise last_exc
 
     # -- internos --------------------------------------------------------
+
+    def _throttle(self) -> None:
+        """Duerme lo necesario para respetar `min_interval_s` entre llamadas
+        salientes. El timestamp vive en la clase (no en `self`) para que
+        todas las instancias del proceso compartan un único reloj — un
+        sweep de eval crea un `KimiProvider` nuevo por trial."""
+        cls = KimiProvider
+        with cls._throttle_lock:
+            now = time.monotonic()
+            wait = cls._last_request_at + self._min_interval_s - now
+            if wait > 0:
+                time.sleep(wait)
+            cls._last_request_at = time.monotonic()
 
     @staticmethod
     def _normalize_messages(

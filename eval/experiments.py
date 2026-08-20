@@ -209,7 +209,7 @@ def run_experiment_c(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="eval.experiments")
     parser.add_argument("--which", choices=["A", "B", "C"], required=True)
-    parser.add_argument("--provider", choices=["auto", "ollama", "bedrock"], default="ollama")
+    parser.add_argument("--provider", choices=["auto", "ollama", "bedrock", "kimi"], default="ollama")
     parser.add_argument("--ollama-model", default=None)
     parser.add_argument("--ollama-host", default=None)
     parser.add_argument("--trials", type=int, default=5)

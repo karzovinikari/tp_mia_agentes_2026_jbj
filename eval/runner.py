@@ -27,6 +27,7 @@ from mia_agents.llm_client import BedrockProvider, LLMClient, OllamaProvider
 from mia_world import check_goal, load_scenario, make_world_tools
 
 from eval.scenario_meta import OPTIMAL_TOOL_CALLS
+from student_framework.kimi_provider import KimiProvider
 
 
 def build_llm_client(
@@ -35,13 +36,17 @@ def build_llm_client(
     ollama_model: str | None = None,
     ollama_host: str | None = None,
 ) -> LLMClient:
-    """provider en {"auto", "ollama", "bedrock"}.
+    """provider en {"auto", "ollama", "bedrock", "kimi"}.
 
     "auto" delega en `LLMClient.from_env()` (mismo criterio que usa la
     cátedra: `OLLAMA_HOST` si está, si no `BEDROCK_MODEL_ID`). "ollama" /
-    "bedrock" fuerzan el proveedor sin depender de qué haya en `.env` —
-    necesario para correr el mismo sweep contra los dos proveedores sin
-    reeditar el archivo entre corridas.
+    "bedrock" / "kimi" fuerzan el proveedor sin depender de qué haya en
+    `.env` — necesario para correr el mismo sweep contra varios proveedores
+    sin reeditar el archivo entre corridas. "kimi" no pasa por
+    `LLMClient.from_env()` (ese archivo es fijo, solo Bedrock/Ollama): usa
+    directamente `KimiProvider`, que sigue el mismo protocolo `LLMClient`
+    pero vive en `student_framework/` — lee `KIMI_API_KEY`/`KIMI_MODEL` de
+    `.env` igual que los demás.
     """
     load_env_files()
     if provider == "auto":
@@ -50,7 +55,11 @@ def build_llm_client(
         return LLMClient(OllamaProvider(model=ollama_model, host=ollama_host))
     if provider == "bedrock":
         return LLMClient(BedrockProvider())
-    raise ValueError(f"provider desconocido: {provider!r} (esperado: auto|ollama|bedrock)")
+    if provider == "kimi":
+        return LLMClient(KimiProvider())
+    raise ValueError(
+        f"provider desconocido: {provider!r} (esperado: auto|ollama|bedrock|kimi)"
+    )
 
 
 @dataclass

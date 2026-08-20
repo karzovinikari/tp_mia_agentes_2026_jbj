@@ -76,7 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Id, dificultad, path .json, o 'all' (repetible; default: all).",
     )
-    parser.add_argument("--provider", choices=["auto", "ollama", "bedrock"], default="auto")
+    parser.add_argument("--provider", choices=["auto", "ollama", "bedrock", "kimi"], default="auto")
     parser.add_argument("--ollama-model", default=None, help="Override de OLLAMA_MODEL para este run.")
     parser.add_argument("--ollama-host", default=None, help="Override de OLLAMA_HOST para este run.")
     parser.add_argument("--trials", type=int, default=1, help="Trials por escenario (default: 1).")

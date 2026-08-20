@@ -1,0 +1,97 @@
+{
+  "trial_id": "vault-combination__ollama__c8db2f02__t1",
+  "scenario_id": "vault-combination",
+  "difficulty": "extreme",
+  "provider": "ollama",
+  "module": "student_framework",
+  "framework_config": {
+    "system_prompt": "Sos un agente que intenta escapar de una sala simulada. Tenés las herramientas look, examine, take, use (y go si hay navegación entre salas). Antes de actuar a ciegas, usá look para ver qué hay en la sala. No hay mapa: si navegás entre salas, llevá vos mismo la cuenta de dónde encontraste cada objeto para poder volver. Si el objetivo pide un orden (por ejemplo, llevarte algo ANTES de abrir una puerta que se sella), planificá ese orden antes de actuar, no lo improvises. Si una acción devuelve un error, no la repitas igual: leé el error y cambiá el argumento o el enfoque."
+  },
+  "harness_options": {
+    "noop_m1_tools": true
+  },
+  "trial_index": 1,
+  "timestamp": "2026-08-19T19:50:49",
+  "wall_time_s": 8.489942834014073,
+  "crashed": false,
+  "crash_message": null,
+  "agent_result": {
+    "answer": "",
+    "steps": [
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Vestíbulo.\nUn vestíbulo de hormigón con un panel de seguridad junto a la puerta principal. El panel tiene tres ranuras vacías rotuladas 'NÚCLEO'. Un pasillo se abre al norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"obj\": \"puerta_principal\"}",
+        "tool_output": null,
+        "error": "Error ejecutando 'examine': _make_examine.<locals>.examine_impl() got an unexpected keyword argument 'obj'"
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Vestíbulo.\nUn vestíbulo de hormigón con un panel de seguridad junto a la puerta principal. El panel tiene tres ranuras vacías rotuladas 'NÚCLEO'. Un pasillo se abre al norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"obj\": \"pasillo\"}",
+        "tool_output": null,
+        "error": "Error ejecutando 'examine': _make_examine.<locals>.examine_impl() got an unexpected keyword argument 'obj'"
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Vestíbulo.\nUn vestíbulo de hormigón con un panel de seguridad junto a la puerta principal. El panel tiene tres ranuras vacías rotuladas 'NÚCLEO'. Un pasillo se abre al norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"obj\": \"vestíbulo\"}",
+        "tool_output": null,
+        "error": "Error ejecutando 'examine': _make_examine.<locals>.examine_impl() got an unexpected keyword argument 'obj'"
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Vestíbulo.\nUn vestíbulo de hormigón con un panel de seguridad junto a la puerta principal. El panel tiene tres ranuras vacías rotuladas 'NÚCLEO'. Un pasillo se abre al norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"obj\": \"pasillo\"}",
+        "tool_output": null,
+        "error": "Error ejecutando 'take': _make_take.<locals>.take_impl() got an unexpected keyword argument 'obj'"
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Vestíbulo.\nUn vestíbulo de hormigón con un panel de seguridad junto a la puerta principal. El panel tiene tres ranuras vacías rotuladas 'NÚCLEO'. Un pasillo se abre al norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"dir\": \"norte\"}",
+        "tool_output": null,
+        "error": "Error ejecutando 'go': _make_go.<locals>.go_impl() got an unexpected keyword argument 'dir'"
+      }
+    ],
+    "error": "Se alcanzó el límite de 10 iteraciones sin respuesta final.",
+    "input_tokens": 7824,
+    "output_tokens": 147
+  },
+  "tool_call_count": 10,
+  "optimal_calls": 21,
+  "goal": {
+    "type": "item_open",
+    "item": "puerta_principal"
+  },
+  "goal_achieved": false,
+  "goal_reason": "puerta principal está cerrada",
+  "event_log": [
+    "enter:vestibulo"
+  ]
+}
