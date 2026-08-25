@@ -1,0 +1,150 @@
+{
+  "trial_id": "color-locks__openai__gpt-4o-mini__2afde3e9__t0",
+  "scenario_id": "color-locks",
+  "difficulty": "medium",
+  "provider": "openai",
+  "module": "student_framework",
+  "framework_config": {
+    "system_prompt": "Sos un agente que intenta escapar de una sala simulada. Tenés las herramientas look, examine, take, use (y go si hay navegación entre salas). Antes de actuar a ciegas, usá look para ver qué hay en la sala. No hay mapa: si navegás entre salas, llevá vos mismo la cuenta de dónde encontraste cada objeto para poder volver. Si el objetivo pide un orden (por ejemplo, llevarte algo ANTES de abrir una puerta que se sella), planificá ese orden antes de actuar, no lo improvises. Si una acción devuelve un error, no la repitas igual: leé el error y cambiá el argumento o el enfoque.",
+    "max_iterations": 25
+  },
+  "harness_options": {
+    "noop_m1_tools": false
+  },
+  "trial_index": 0,
+  "timestamp": "2026-08-20T19:58:25",
+  "wall_time_s": 14.807328375056386,
+  "crashed": false,
+  "crash_message": null,
+  "agent_result": {
+    "answer": "Has abierto la puerta principal y ahora puedes salir del sótano. ¡Felicidades por escapar!",
+    "steps": [
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Sótano.\nUn sótano de piedra con olor a humedad y una bombilla solitaria colgando del techo. Una repisa baja en la pared norte sostiene una llave plateada brillante. En el suelo descansan cuatro cofres pintados de colores distintos. Al fondo, una puerta de roble con cerradura dorada.\nVes:\n  - llave plateada [id: llave_plata]\n  - cofre plateado [id: cofre_plata] (cerrada)\n  - cofre rojo [id: cofre_rojo] (cerrada)\n  - cofre verde [id: cofre_verde] (cerrada)\n  - cofre azul [id: cofre_azul]\n  - puerta principal [id: puerta_principal] (cerrada)",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\":\"llave_plata\"}",
+        "tool_output": "Tomas llave plateada.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\":\"cofre_azul\"}",
+        "tool_output": "cofre azul: Un cofre pintado de azul desconchado. Sorprendentemente, no tiene cerradura: las bisagras se abren al primer empujón.\nContiene:\n  - trapo viejo [id: trapo_viejo]",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\":\"trapo_viejo\"}",
+        "tool_output": "Tomas trapo viejo.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"cofre_plata\"}",
+        "tool_output": "cofre plateado: Un cofre pequeño con tachuelas plateadas y una cerradura del mismo color. Encaja con una llave del mismo color.\nEstá cerrado con llave. No puedes ver el interior hasta abrirlo.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"cofre_rojo\"}",
+        "tool_output": "cofre rojo: Un cofre mediano pintado de rojo, con una cerradura roja del mismo tono. Encaja con una llave del mismo color.\nEstá cerrado con llave. No puedes ver el interior hasta abrirlo.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"cofre_verde\"}",
+        "tool_output": "cofre verde: Un cofre grande pintado de verde, con una cerradura verde voluminosa. Encaja con una llave del mismo color.\nEstá cerrado con llave. No puedes ver el interior hasta abrirlo.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\":\"llave_plata\",\"target\":\"cofre_plata\"}",
+        "tool_output": "Usas llave plateada con cofre plateado. Se abre.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\":\"cofre_plata\"}",
+        "tool_output": "cofre plateado: Un cofre pequeño con tachuelas plateadas y una cerradura del mismo color. Encaja con una llave del mismo color.\nContiene:\n  - llave roja [id: llave_roja]",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\":\"llave_roja\"}",
+        "tool_output": "Tomas llave roja.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\":\"llave_roja\",\"target\":\"cofre_rojo\"}",
+        "tool_output": "Usas llave roja con cofre rojo. Se abre.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\":\"cofre_rojo\"}",
+        "tool_output": "cofre rojo: Un cofre mediano pintado de rojo, con una cerradura roja del mismo tono. Encaja con una llave del mismo color.\nContiene:\n  - llave verde [id: llave_verde]",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\":\"llave_verde\"}",
+        "tool_output": "Tomas llave verde.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\":\"llave_verde\",\"target\":\"cofre_verde\"}",
+        "tool_output": "Usas llave verde con cofre verde. Se abre.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\":\"cofre_verde\"}",
+        "tool_output": "cofre verde: Un cofre grande pintado de verde, con una cerradura verde voluminosa. Encaja con una llave del mismo color.\nContiene:\n  - llave dorada [id: llave_oro]",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\":\"llave_oro\"}",
+        "tool_output": "Tomas llave dorada.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\":\"llave_oro\",\"target\":\"puerta_principal\"}",
+        "tool_output": "Usas llave dorada con puerta principal. Se abre.",
+        "error": null
+      }
+    ],
+    "error": null,
+    "input_tokens": 21909,
+    "output_tokens": 340
+  },
+  "tool_call_count": 17,
+  "optimal_calls": 11,
+  "goal": {
+    "type": "item_open",
+    "item": "puerta_principal"
+  },
+  "goal_achieved": true,
+  "goal_reason": "puerta principal está abierta",
+  "model": "gpt-4o-mini",
+  "event_log": [
+    "enter:sotano",
+    "take:llave_plata",
+    "take:trapo_viejo",
+    "open:cofre_plata",
+    "take:llave_roja",
+    "open:cofre_rojo",
+    "take:llave_verde",
+    "open:cofre_verde",
+    "take:llave_oro",
+    "open:puerta_principal"
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "trial_id": "backtracking-vault__ollama__qwen2-5__56c5ece3__t0",
+  "scenario_id": "backtracking-vault",
+  "difficulty": "extreme",
+  "provider": "ollama",
+  "module": "student_framework",
+  "framework_config": {
+    "system_prompt": "Sos un agente que intenta escapar de una sala simulada. Tenés las herramientas look, examine, take, use (y go si hay navegación entre salas). Antes de actuar a ciegas, usá look para ver qué hay en la sala. No hay mapa: si navegás entre salas, llevá vos mismo la cuenta de dónde encontraste cada objeto para poder volver. Si el objetivo pide un orden (por ejemplo, llevarte algo ANTES de abrir una puerta que se sella), planificá ese orden antes de actuar, no lo improvises. Si una acción devuelve un error, no la repitas igual: leé el error y cambiá el argumento o el enfoque."
+  },
+  "harness_options": {
+    "noop_m1_tools": true
+  },
+  "trial_index": 0,
+  "timestamp": "2026-08-20T20:32:41",
+  "wall_time_s": 20.20354483416304,
+  "crashed": false,
+  "crash_message": null,
+  "agent_result": {
+    "answer": "",
+    "steps": [
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Entrada de la bóveda.\nUna antesala con la puerta principal de salida y un cofre antiguo de hierro contra la pared. Al norte hay un corredor.\nVes:\n  - cofre antiguo [id: cofre_antiguo] (cerrada)\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"cofre_antiguo\"}",
+        "tool_output": "Error: cofre antiguo no es algo que puedas llevarte.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"cofre_antiguo\"}",
+        "tool_output": "cofre antiguo: Un cofre de hierro con una cerradura corroída. Necesita una llave oxidada que encaje en su mecanismo viejo.\nEstá cerrado con llave. No puedes ver el interior hasta abrirlo.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"llave_maestra\", \"target\": \"puerta_principal\"}",
+        "tool_output": "Error: no llevas ningún 'llave_maestra'.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Sala A.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Sala A.\nUna sala con un escritorio cubierto de papeles. Al norte hay una puerta blindada cerrada.\nVes:\n  - escritorio [id: escritorio]\n  - puerta blindada [id: puerta_blindada] (cerrada)\nSalidas: norte (bloqueada por puerta blindada), sur.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"escritorio\"}",
+        "tool_output": "escritorio: Un escritorio con cajones. Dentro hay una llave y papeles inútiles.\nContiene:\n  - llave intermedia [id: llave_intermedia]",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"llave_intermedia\", \"target\": \"puerta_blindada\"}",
+        "tool_output": "Error: no llevas ningún 'llave_intermedia'.",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"llave_intermedia\"}",
+        "tool_output": "Tomas llave intermedia.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"llave_intermedia\", \"target\": \"puerta_blindada\"}",
+        "tool_output": "Usas llave intermedia con puerta blindada. Se abre.",
+        "error": null
+      }
+    ],
+    "error": "Se alcanzó el límite de 10 iteraciones sin respuesta final.",
+    "input_tokens": 15129,
+    "output_tokens": 501
+  },
+  "tool_call_count": 10,
+  "optimal_calls": 18,
+  "goal": {
+    "type": "item_open",
+    "item": "puerta_principal"
+  },
+  "goal_achieved": false,
+  "goal_reason": "puerta principal está cerrada",
+  "model": "qwen2.5",
+  "event_log": [
+    "enter:entrada",
+    "enter:sala_a",
+    "take:llave_intermedia",
+    "open:puerta_blindada"
+  ]
+}

@@ -22,6 +22,7 @@ _MAX_ITERATIONS_RE = re.compile(r"^Se alcanzó el límite de \d+ iteraciones sin
 # Frases que las tools de mia_world devuelven cuando el agente repite una
 # acción que ya tuvo éxito antes (proxy de "olvidó que ya lo había hecho").
 _ALREADY_DONE_MARKERS = ("ya llevas", "ya está abierta", "ya habías colocado")
+_UNKNOWN_WORLD_OBJECT_MARKER = "no existe ningún objeto con id"
 
 
 def _is_provider_error(trial: TrialRecord) -> bool:
@@ -37,7 +38,9 @@ def _is_hallucinated_tool_or_args(trial: TrialRecord) -> bool:
     for step in (trial.agent_result or {}).get("steps", []):
         err = step.get("error")
         if err and (
-            err.startswith("Herramienta desconocida:") or err.startswith("Argumentos JSON inválidos:")
+            err.startswith("Herramienta desconocida:")
+            or err.startswith("Argumentos JSON inválidos:")
+            or err.startswith("Argumentos inválidos:")
         ):
             return True
     return False
@@ -75,8 +78,13 @@ def _is_unrecovered_tool_error(trial: TrialRecord) -> bool:
     return step_failed(steps[-1])
 
 
+def _is_evaluation_infrastructure_error(trial: TrialRecord) -> bool:
+    return trial.crashed and trial.crash_stage in {"scenario_load", "goal_check"}
+
+
 # Orden de prioridad: la primera regla que matchea gana.
 FAILURE_RULES: list[tuple[str, Callable[[TrialRecord], bool]]] = [
+    ("evaluation_infrastructure_error", _is_evaluation_infrastructure_error),
     ("provider_error", _is_provider_error),
     ("max_iterations_exhausted", _is_max_iterations_exhausted),
     ("hallucinated_tool_or_args", _is_hallucinated_tool_or_args),
@@ -111,6 +119,42 @@ def error_breakdown(trials: list[TrialRecord]) -> dict[str, object]:
         "counts": dict(counts),
         "pct_of_failures": {
             k: (v / total_failures if total_failures else None) for k, v in counts.items()
+        },
+    }
+
+
+def incident_categories(trial: TrialRecord) -> set[str]:
+    """Incidencias no exclusivas observables en una traza.
+
+    La categoría terminal de un fallo sigue siendo única para que los
+    porcentajes sumen 100%, pero eso puede ocultar errores previos cuando el
+    trial termina por `max_iterations`. Estas etiquetas complementarias no
+    tienen esa restricción.
+    """
+    incidents: set[str] = set()
+    if _is_hallucinated_tool_or_args(trial):
+        incidents.add("invalid_tool_interface_call")
+    for step in (trial.agent_result or {}).get("steps", []):
+        output = step.get("tool_output")
+        if isinstance(output, str) and _UNKNOWN_WORLD_OBJECT_MARKER in output.lower():
+            incidents.add("unknown_world_object_reference")
+            break
+    if _is_context_window_too_small(trial):
+        incidents.add("possible_context_loss")
+    return incidents
+
+
+def incident_breakdown(trials: list[TrialRecord]) -> dict[str, object]:
+    counts: dict[str, int] = defaultdict(int)
+    for trial in trials:
+        for category in incident_categories(trial):
+            counts[category] += 1
+    return {
+        "total_trials": len(trials),
+        "counts": dict(counts),
+        "pct_of_trials": {
+            category: (count / len(trials) if trials else None)
+            for category, count in counts.items()
         },
     }
 

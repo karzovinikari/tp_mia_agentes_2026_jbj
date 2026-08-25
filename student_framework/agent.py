@@ -12,6 +12,7 @@ Los tests de conformidad en `tests/conformance/test_m1.py` y
 
 from __future__ import annotations
 
+import inspect
 import json
 import time
 from typing import Any, Callable
@@ -134,10 +135,11 @@ class MyAgent:
         1. Recencia: el mensaje de usuario más reciente SIEMPRE entra en la
            ventana, aunque un turno con muchos tool_calls lo hubiera
            empujado fuera de los últimos N.
-        2. Sin tool huérfano: la ventana no puede empezar con un mensaje
-           role="tool" cuyo turno assistant (con el tool_call) quedó
-           recortado — los proveedores reales (Bedrock) rechazan un
-           toolResult sin su toolUse previo.
+        2. Sin tool huérfano: la ventana no puede contener un mensaje
+           role="tool" cuyo turno assistant (el que declara ese
+           `tool_call_id`) quedó fuera del recorte. Los proveedores
+           estrictos (OpenAI, Bedrock) responden 400 ante un toolResult
+           sin su toolUse previo.
         """
         budget = self._max_history_messages
         msgs = self._history
@@ -154,9 +156,39 @@ class MyAgent:
                 # en ese caso la ventana es solo el mensaje del usuario.)
                 tail = window[-(budget - 1):] if budget > 1 else []
                 window = [last_user] + tail
-        while window and window[0].get("role") == "tool":
-            window.pop(0)
-        return window
+        return self._drop_orphan_tool_messages(window)
+
+    @staticmethod
+    def _drop_orphan_tool_messages(
+        window: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Descarta los `role="tool"` cuyo `tool_call_id` no fue declarado
+        por un assistant previo dentro de la ventana.
+
+        No alcanza con mirar solo el primer mensaje: cuando la invariante
+        de recencia antepone el último turno del usuario, la cola puede
+        arrancar con uno o más `tool` huérfanos en posiciones 1, 2, ... El
+        chequeo se hace por `tool_call_id` en vez de por posición, así
+        cubre cualquier forma que tome el recorte.
+
+        (El caso simétrico — un assistant con `tool_calls` sin sus
+        respuestas — no puede darse acá: `run` agrega los mensajes `tool`
+        inmediatamente después del turno assistant, así que el historial
+        nunca termina en un tool_call sin responder.)
+        """
+        declared: set[str] = set()
+        cleaned: list[dict[str, Any]] = []
+        for message in window:
+            if message.get("role") == "assistant":
+                for tool_call in message.get("tool_calls") or []:
+                    tool_call_id = tool_call.get("id")
+                    if tool_call_id:
+                        declared.add(tool_call_id)
+            elif message.get("role") == "tool":
+                if message.get("tool_call_id") not in declared:
+                    continue
+            cleaned.append(message)
+        return cleaned
 
     # ------------------------------------------------------------------
     # Resiliencia (M2): reintentos con backoff ante fallos transitorios
@@ -323,8 +355,33 @@ class MyAgent:
                 error=f"Argumentos JSON inválidos: {e}",
             )
 
+        if not isinstance(kwargs, dict):
+            return AgentStep(
+                tool_name=name,
+                tool_input=raw_args,
+                tool_output=None,
+                error="Argumentos inválidos: se esperaba un objeto JSON.",
+            )
+
+        # Validamos la forma de los argumentos antes de ejecutar la tool. Así
+        # podemos distinguir una llamada mal construida por el modelo de un
+        # TypeError que haya ocurrido dentro de la implementación de la tool.
+        try:
+            signature = inspect.signature(self._tools[name])
+        except (TypeError, ValueError):
+            signature = None  # algunos callables nativos no exponen firma
+        if signature is not None:
+            try:
+                signature.bind(**kwargs)
+            except TypeError as e:
+                return AgentStep(
+                    tool_name=name,
+                    tool_input=raw_args,
+                    tool_output=None,
+                    error=f"Argumentos inválidos: {e}",
+                )
+
         # Ejecución con reintentos transitorios. Cualquier excepción final
-        # (TypeError por kwargs que no matchean la firma, errores internos)
         # se registra como error del step en vez de propagarse.
         try:
             output = self._call_tool_with_retries(name, kwargs)

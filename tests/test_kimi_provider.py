@@ -301,12 +301,16 @@ def test_no_tools_means_no_tools_key(
 # ---------------------------------------------------------------------------
 
 
-def test_temperature_and_max_tokens_sent(
+def test_temperature_omitted_and_max_tokens_sent(
     provider: KimiProvider, recorder: _Recorder
 ) -> None:
+    """La temperatura NO se envía: toda la línea vigente de Moonshot
+    (k2.5/k2.6/k3) responde 400 a cualquier valor distinto de 1
+    ("invalid temperature: only 1 is allowed for this model"). El modelo
+    original `kimi-k2-0711-preview`, que sí la aceptaba, fue retirado."""
     provider.chat(messages=[{"role": "user", "content": "x"}], temperature=0.7)
     body = recorder.sent_body
-    assert body["temperature"] == 0.7
+    assert "temperature" not in body
     assert body["max_tokens"] == 4096  # default
 
 

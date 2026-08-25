@@ -20,13 +20,15 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from eval.errors import error_breakdown  # noqa: E402
+from eval.cohorts import COHORTS, select_cohort  # noqa: E402
+from eval.errors import error_breakdown, incident_breakdown  # noqa: E402
 from eval.metrics import (  # noqa: E402
     mean_efficiency,
     mean_wall_time,
     success_rate,
     success_rate_macro,
 )
+from eval.providers import PROVIDERS  # noqa: E402
 from eval.rubric import aggregate_rubric  # noqa: E402
 from eval.runner import TrialRecord, load_all_trial_records  # noqa: E402
 
@@ -40,15 +42,18 @@ def _scenario_summary(trials: list[TrialRecord]) -> dict[str, object]:
         "mean_wall_time_s": mean_wall_time(trials),
         "rubric": aggregate_rubric(trials),
         "error_breakdown": error_breakdown(trials),
+        "incident_breakdown": incident_breakdown(trials),
     }
 
 
-def build_summary(trials: list[TrialRecord]) -> dict[str, object]:
+def build_summary(
+    trials: list[TrialRecord], *, selection: dict[str, object] | None = None
+) -> dict[str, object]:
     by_scenario: dict[str, list[TrialRecord]] = defaultdict(list)
     for t in trials:
         by_scenario[t.scenario_id].append(t)
 
-    return {
+    summary = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "n_trials_total": len(trials),
         "success_rate_micro": success_rate(trials),
@@ -56,8 +61,12 @@ def build_summary(trials: list[TrialRecord]) -> dict[str, object]:
         "mean_efficiency_overall": mean_efficiency(trials),
         "rubric_overall": aggregate_rubric(trials),
         "error_breakdown_overall": error_breakdown(trials),
+        "incident_breakdown_overall": incident_breakdown(trials),
         "by_scenario": {sid: _scenario_summary(ts) for sid, ts in sorted(by_scenario.items())},
     }
+    if selection is not None:
+        summary["selection"] = selection
+    return summary
 
 
 def _fmt_pct(x: float | None) -> str:
@@ -73,6 +82,10 @@ def render_markdown(summary: dict[str, object]) -> str:
         "# Resumen de evaluación — M3",
         "",
         f"Generado: {summary['generated_at']}  ·  trials totales: {summary['n_trials_total']}",
+    ]
+    if "selection" in summary:
+        lines += ["", f"Selección: `{json.dumps(summary['selection'], ensure_ascii=False)}`"]
+    lines += [
         "",
         f"- **Success rate (micro)**: {_fmt_pct(summary['success_rate_micro'])}",
         f"- **Success rate (macro, promedio por escenario)**: {_fmt_pct(summary['success_rate_macro'])}",
@@ -114,11 +127,28 @@ def render_markdown(summary: dict[str, object]) -> str:
     for crit, rate in pass_rates.items():
         lines.append(f"| {crit} | {_fmt_pct(rate)} | {applicable_n.get(crit, 0)} |")
 
+    lines += ["", "## Incidencias observadas (no exclusivas)", ""]
+    incidents = summary.get("incident_breakdown_overall", {})
+    incident_counts = incidents.get("counts", {})
+    if not incident_counts:
+        lines.append("(sin incidencias adicionales)")
+    else:
+        lines.append("| incidencia | trials | % de trials |")
+        lines.append("|---|---:|---:|")
+        for category, count in sorted(incident_counts.items(), key=lambda kv: -kv[1]):
+            rate = incidents.get("pct_of_trials", {}).get(category)
+            lines.append(f"| {category} | {count} | {_fmt_pct(rate)} |")
+
     return "\n".join(lines) + "\n"
 
 
-def write_summary(trials: list[TrialRecord], out_dir: Path) -> dict[str, object]:
-    summary = build_summary(trials)
+def write_summary(
+    trials: list[TrialRecord],
+    out_dir: Path,
+    *,
+    selection: dict[str, object] | None = None,
+) -> dict[str, object]:
+    summary = build_summary(trials, selection=selection)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -132,22 +162,54 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--raw-dir", default=str(_REPO_ROOT / "eval" / "results" / "raw"))
     parser.add_argument("--out-dir", default=str(_REPO_ROOT / "eval" / "results"))
     parser.add_argument(
+        "--cohort",
+        choices=list(COHORTS),
+        default="all",
+        help="Corte reproducible de configuración (default: all).",
+    )
+    parser.add_argument(
         "--provider",
-        choices=["all", "ollama", "bedrock", "auto"],
+        choices=["all", *PROVIDERS],
         default="all",
         help="Filtrar trials por proveedor antes de agregar (default: todos).",
+    )
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Filtrar además por modelo (p. ej. qwen2.5). Sin esto, se mezclan modelos del mismo proveedor.",
+    )
+    parser.add_argument("--module", default=None, help="Filtrar por módulo de agente.")
+    parser.add_argument(
+        "--scenario",
+        action="append",
+        default=[],
+        help="Filtrar por id de escenario (repetible).",
     )
     args = parser.parse_args(argv)
 
     trials = load_all_trial_records(Path(args.raw_dir))
+    trials = select_cohort(trials, args.cohort)
     if args.provider != "all":
         trials = [t for t in trials if t.provider == args.provider]
+    if args.model is not None:
+        trials = [t for t in trials if t.model == args.model]
+    if args.module is not None:
+        trials = [t for t in trials if t.module == args.module]
+    if args.scenario:
+        trials = [t for t in trials if t.scenario_id in set(args.scenario)]
 
     if not trials:
         print(f"Sin trials en {args.raw_dir} (filtro provider={args.provider!r}).", file=sys.stderr)
         return 1
 
-    summary = write_summary(trials, Path(args.out_dir))
+    selection = {
+        "cohort": args.cohort,
+        "provider": args.provider,
+        "model": args.model,
+        "module": args.module,
+        "scenarios": args.scenario or "all",
+    }
+    summary = write_summary(trials, Path(args.out_dir), selection=selection)
     print(f"summary.json / summary.md escritos en {args.out_dir}")
     print(f"success_rate_micro={summary['success_rate_micro']}  n={summary['n_trials_total']}")
     return 0

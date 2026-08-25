@@ -1,0 +1,177 @@
+{
+  "trial_id": "vault-combination__bedrock__amazon-nova-lite-v1-0__6b4a2c4f__t0",
+  "scenario_id": "vault-combination",
+  "difficulty": "extreme",
+  "provider": "bedrock",
+  "module": "student_framework",
+  "framework_config": {
+    "system_prompt": "Sos un agente que intenta escapar de una sala simulada. Tenés las herramientas look, examine, take, use (y go si hay navegación entre salas). Antes de actuar a ciegas, usá look para ver qué hay en la sala. No hay mapa: si navegás entre salas, llevá vos mismo la cuenta de dónde encontraste cada objeto para poder volver. Si el objetivo pide un orden (por ejemplo, llevarte algo ANTES de abrir una puerta que se sella), planificá ese orden antes de actuar, no lo improvises. Si una acción devuelve un error, no la repitas igual: leé el error y cambiá el argumento o el enfoque.",
+    "max_iterations": 21
+  },
+  "harness_options": {
+    "noop_m1_tools": false
+  },
+  "trial_index": 0,
+  "timestamp": "2026-08-23T16:45:17",
+  "wall_time_s": 17.372485999949276,
+  "crashed": false,
+  "crash_message": null,
+  "agent_result": {
+    "answer": "",
+    "steps": [
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Vestíbulo.\nUn vestíbulo de hormigón con un panel de seguridad junto a la puerta principal. El panel tiene tres ranuras vacías rotuladas 'NÚCLEO'. Un pasillo se abre al norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Galería central.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Galería central.\nUna galería que distribuye hacia varias salas: el taller al este, la biblioteca al oeste y, al norte, una puerta metálica de depósito que está cerrada.\nVes:\n  - puerta del depósito [id: puerta_deposito] (cerrada)\nSalidas: este, norte (bloqueada por puerta del depósito), oeste, sur.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"este\"}",
+        "tool_output": "Caminas hacia este. Llegas a Taller.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Taller.\nUn taller con un banco de herramientas lleno de cajones. Huele a aceite y metal.\nVes:\n  - banco de herramientas [id: banco_herramientas]\nSalidas: oeste.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"oeste\"}",
+        "tool_output": "Caminas hacia oeste. Llegas a Galería central.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Error: el paso hacia norte está bloqueado por puerta del depósito. Tenés que abrirla primero.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"este\"}",
+        "tool_output": "Caminas hacia este. Llegas a Taller.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"banco_herramientas\"}",
+        "tool_output": "banco de herramientas: Un banco con varios cajones. Al abrirlos encontrás piezas sueltas.\nContiene:\n  - núcleo rojo [id: nucleo_rojo]\n  - llave del depósito [id: llave_deposito]\n  - destornillador [id: destornillador]",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"llave_deposito\"}",
+        "tool_output": "Tomas llave del depósito.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"oeste\"}",
+        "tool_output": "Caminas hacia oeste. Llegas a Galería central.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"llave_deposito\", \"target\": \"puerta_deposito\"}",
+        "tool_output": "Usas llave del depósito con puerta del depósito. Se abre.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Depósito.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Depósito.\nUn depósito frío con un cajón de seguridad metálico contra la pared.\nVes:\n  - cajón de seguridad [id: cajon_deposito]\nSalidas: sur.\nLlevas: llave del depósito [id: llave_deposito].",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"cajon_deposito\"}",
+        "tool_output": "cajón de seguridad: Un cajón metálico. Se abre con un tirón y dentro hay piezas.\nContiene:\n  - núcleo verde [id: nucleo_verde]\n  - llave de la vitrina [id: llave_vitrina]",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"nucleo_verde\"}",
+        "tool_output": "Tomas núcleo verde.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"sur\"}",
+        "tool_output": "Caminas hacia sur. Llegas a Galería central.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"sur\"}",
+        "tool_output": "Caminas hacia sur. Llegas a Vestíbulo.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"nucleo_verde\", \"target\": \"puerta_principal\"}",
+        "tool_output": "Colocas núcleo verde en puerta principal. Todavía faltan piezas: núcleo rojo, núcleo azul.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"oeste\"}",
+        "tool_output": "Error: no hay salida 'oeste' desde aquí. Salidas disponibles: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Galería central.",
+        "error": null
+      }
+    ],
+    "error": "Se alcanzó el límite de 21 iteraciones sin respuesta final.",
+    "input_tokens": 55310,
+    "output_tokens": 1144
+  },
+  "tool_call_count": 21,
+  "optimal_calls": 21,
+  "goal": {
+    "type": "item_open",
+    "item": "puerta_principal"
+  },
+  "goal_achieved": false,
+  "goal_reason": "puerta principal está cerrada",
+  "model": "amazon.nova-lite-v1:0",
+  "event_log": [
+    "enter:vestibulo",
+    "enter:galeria",
+    "enter:taller",
+    "enter:galeria",
+    "enter:taller",
+    "take:llave_deposito",
+    "enter:galeria",
+    "open:puerta_deposito",
+    "enter:deposito",
+    "take:nucleo_verde",
+    "enter:galeria",
+    "enter:vestibulo",
+    "enter:galeria"
+  ]
+}

@@ -359,3 +359,68 @@ def test_recuperacion_end_to_end_file_reader(tmp_path, monkeypatch) -> None:
     assert "informe.txt" in first_error_fed_back
     # El segundo step leyó el archivo correcto.
     assert result.steps[1].tool_output == "dato secreto"
+
+
+# ---------------------------------------------------------------------------
+# Regresión: tool huérfano tras aplicar la invariante de recencia
+#
+# Bug encontrado durante la evaluación de M3, no por los tests con mock: al
+# anteponer el último mensaje de usuario, la cola podía arrancar con un
+# `role="tool"` cuyo turno assistant había quedado recortado. `MockLLMClient`
+# lo acepta sin chistar, pero OpenAI y Bedrock responden 400. Se manifestó
+# como 2 crashes en el escenario más largo (vault-combination, 25 iteraciones).
+# ---------------------------------------------------------------------------
+
+
+def _tiene_tool_huerfano(window: list[dict]) -> bool:
+    """Chequeo estricto, igual al que hacen OpenAI/Bedrock."""
+    declarados: set[str] = set()
+    for m in window:
+        if m.get("role") == "assistant":
+            for tc in m.get("tool_calls") or []:
+                declarados.add(tc.get("id"))
+        elif m.get("role") == "tool" and m.get("tool_call_id") not in declarados:
+            return True
+    return False
+
+
+def test_ventana_no_deja_tool_huerfano_tras_forzar_recencia() -> None:
+    agent = MyAgent(llm_client=MockLLMClient([]), max_history_messages=6)
+    agent._history = [{"role": "user", "content": "objetivo"}]
+    for i in range(5):
+        agent._history.append(
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{"id": f"c{i}", "function": {"name": "look", "arguments": "{}"}}],
+            }
+        )
+        agent._history.append({"role": "tool", "content": "ok", "tool_call_id": f"c{i}"})
+
+    window = agent._window()
+
+    assert len(window) <= 6
+    # El mensaje de usuario sigue presente (invariante de recencia).
+    assert any(m.get("role") == "user" for m in window)
+    assert not _tiene_tool_huerfano(window), f"quedó un tool sin su assistant: {window}"
+
+
+@pytest.mark.parametrize("budget", [2, 3, 4, 5, 6, 8, 12])
+def test_ventana_nunca_deja_tool_huerfano_para_ningun_presupuesto(budget: int) -> None:
+    """Barrido de presupuestos sobre un historial largo con muchos tool_calls."""
+    agent = MyAgent(llm_client=MockLLMClient([]), max_history_messages=budget)
+    agent._history = [{"role": "user", "content": "objetivo"}]
+    for i in range(10):
+        agent._history.append(
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{"id": f"c{i}", "function": {"name": "look", "arguments": "{}"}}],
+            }
+        )
+        agent._history.append({"role": "tool", "content": "ok", "tool_call_id": f"c{i}"})
+
+    window = agent._window()
+
+    assert len(window) <= budget
+    assert not _tiene_tool_huerfano(window), f"budget={budget} dejó un tool huérfano: {window}"

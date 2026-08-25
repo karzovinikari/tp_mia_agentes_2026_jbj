@@ -11,13 +11,14 @@ comparativa en `eval/results/experiment_<X>_comparison.md`.
 - **B** — sensibilidad a `max_iterations` en escenarios de solución larga.
   H1: el default (10) es insuficiente porque el modelo no batchea varios
   tool_calls por respuesta.
-- **C** (stretch) — tools de M1 reales vs. no-op. H1: tools irrelevantes
-  en el prompt aumentan `hallucinated_tool_or_args` o bajan éxito.
+- **C** — tools de M1 visibles vs. ausentes. H1: exponer tools irrelevantes
+  en el prompt aumenta elecciones de tool equivocadas o baja el éxito.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -28,9 +29,14 @@ if str(_REPO_ROOT) not in sys.path:
 from mia_world import load_scenario  # noqa: E402
 
 from eval.prompts import ESCAPE_ROOM_SYSTEM_PROMPT  # noqa: E402
+from eval.providers import PROVIDERS, model_slug  # noqa: E402
 from eval.report import build_summary  # noqa: E402
 from eval.runner import TrialRecord, run_suite  # noqa: E402
-from eval.scenario_meta import LONG_SOLUTION_SCENARIOS, MULTI_ROOM_SCENARIOS  # noqa: E402
+from eval.scenario_meta import (  # noqa: E402
+    LONG_SOLUTION_SCENARIOS,
+    MULTI_ROOM_SCENARIOS,
+    OPTIMAL_TOOL_CALLS,
+)
 
 DEFAULT_SCENARIOS_DIR = _REPO_ROOT / "scenarios"
 DEFAULT_OUT_DIR = _REPO_ROOT / "eval" / "results"
@@ -52,18 +58,26 @@ EXPERIMENTS: dict[str, dict[str, object]] = {
         "control": 10,
         "scenario_ids": LONG_SOLUTION_SCENARIOS,
         "hypothesis": (
-            "El default de 10 round-trips es insuficiente en soluciones "
-            "largas porque el modelo no batchea varios tool_calls por respuesta."
+            "El default de 10 rondas LLM es insuficiente en soluciones largas "
+            "porque los modelos observados suelen pedir una sola acción por ronda."
         ),
     },
 }
 
 
 def _scenario_paths_for_ids(scenario_ids: tuple[str, ...], scenarios_dir: Path) -> list[Path]:
-    paths = []
+    paths: list[Path] = []
+    found: set[str] = set()
     for p in sorted(scenarios_dir.glob("*.json")):
-        if load_scenario(p).id in scenario_ids:
+        scenario_id = load_scenario(p).id
+        if scenario_id in scenario_ids:
             paths.append(p)
+            found.add(scenario_id)
+    missing = set(scenario_ids) - found
+    if missing:
+        raise SystemExit(
+            f"Faltan escenarios requeridos en {scenarios_dir}: {', '.join(sorted(missing))}."
+        )
     return paths
 
 
@@ -76,25 +90,48 @@ def _fmt_ratio(x: float | None) -> str:
 
 
 def _write_comparison_report(
-    name: str, param_label: str, arm_summaries: dict[str, dict], hypothesis: str, out_dir: Path
+    name: str,
+    param_label: str,
+    arm_summaries: dict[str, dict],
+    hypothesis: str,
+    out_dir: Path,
+    *,
+    provider: str,
+    model: str | None,
 ) -> Path:
+    has_m1_call_metrics = any("m1_tool_calls" in summary for summary in arm_summaries.values())
+    table_header = "| arm | n | success (micro) | success (macro) | eficiencia media | top error"
+    table_separator = "|---|---:|---:|---:|---:|---"
+    if has_m1_call_metrics:
+        table_header += " | llamadas M1 | trials con M1"
+        table_separator += "|---:|---:"
+    table_header += " |"
+    table_separator += "|"
     lines = [
         f"# Experimento {name} — comparación de arms ({param_label})",
         "",
+        f"Proveedor: **{provider}** · modelo: **{model or '(default del proveedor)'}**",
+        "",
         f"**Hipótesis:** {hypothesis}",
         "",
-        "| arm | n | success (micro) | success (macro) | eficiencia media | top error |",
-        "|---|---:|---:|---:|---:|---|",
+        table_header,
+        table_separator,
     ]
     for arm_value, summary in arm_summaries.items():
         counts = summary["error_breakdown_overall"].get("counts", {})
         top_error = max(counts.items(), key=lambda kv: kv[1])[0] if counts else "—"
-        lines.append(
+        row = (
             f"| {arm_value} | {summary['n_trials_total']} | "
             f"{_fmt_pct(summary['success_rate_micro'])} | "
             f"{_fmt_pct(summary['success_rate_macro'])} | "
-            f"{_fmt_ratio(summary['mean_efficiency_overall'])} | {top_error} |"
+            f"{_fmt_ratio(summary['mean_efficiency_overall'])} | {top_error}"
         )
+        if has_m1_call_metrics:
+            row += (
+                f" | {summary.get('m1_tool_calls', 0)}"
+                f" | {summary.get('trials_with_m1_tool_calls', 0)}"
+            )
+        lines.append(row + " |")
     lines += ["", "## Desglose de errores por arm", ""]
     for arm_value, summary in arm_summaries.items():
         lines.append(f"### arm = {arm_value}")
@@ -106,9 +143,40 @@ def _write_comparison_report(
                 lines.append(f"- {cat}: {n}")
         lines.append("")
 
-    out_path = out_dir / f"experiment_{name}_comparison.md"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    run_slug = f"{provider}_{model_slug(model)}"
+    out_path = out_dir / f"experiment_{name}_{run_slug}_comparison.md"
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    out_path.with_suffix(".json").write_text(
+        json.dumps(
+            {
+                "experiment": name,
+                "parameter": param_label,
+                "provider": provider,
+                "model": model,
+                "hypothesis": hypothesis,
+                "arms": arm_summaries,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     return out_path
+
+
+_M1_TOOL_NAMES = {"calculator", "file_reader", "word_counter"}
+
+
+def _m1_tool_call_stats(records: list[TrialRecord]) -> tuple[int, int]:
+    total_calls = 0
+    trials_with_calls = 0
+    for record in records:
+        steps = (record.agent_result or {}).get("steps", [])
+        count = sum(1 for step in steps if step.get("tool_name") in _M1_TOOL_NAMES)
+        total_calls += count
+        trials_with_calls += int(count > 0)
+    return total_calls, trials_with_calls
 
 
 def run_experiment(
@@ -118,8 +186,8 @@ def run_experiment(
     trials: int,
     scenarios_dir: Path = DEFAULT_SCENARIOS_DIR,
     out_dir: Path = DEFAULT_OUT_DIR,
-    ollama_model: str | None = None,
-    ollama_host: str | None = None,
+    model: str | None = None,
+    host: str | None = None,
     force: bool = False,
     extra_framework_config: dict[str, object] | None = None,
     report_suffix: str = "",
@@ -134,10 +202,13 @@ def run_experiment(
     para no pisar el archivo de comparación del experimento original)."""
     spec = EXPERIMENTS[name]
     scenario_paths = _scenario_paths_for_ids(spec["scenario_ids"], scenarios_dir)  # type: ignore[arg-type]
-    if not scenario_paths:
-        raise SystemExit(f"Experimento {name}: no se encontraron escenarios en {scenarios_dir}.")
+    if extra_framework_config and spec["param"] in extra_framework_config:
+        raise ValueError(
+            f"extra_framework_config no puede sobrescribir el parámetro del arm {spec['param']!r}."
+        )
 
     arm_summaries: dict[str, dict] = {}
+    effective_model = model
     for value in spec["arms"]:  # type: ignore[union-attr]
         print(f"--- Experimento {name}{report_suffix}: arm {spec['param']}={value} ---")
         framework_config = {
@@ -151,14 +222,22 @@ def run_experiment(
             framework_config=framework_config,
             trials_per_scenario=trials,
             out_dir=out_dir,
-            ollama_model=ollama_model,
-            ollama_host=ollama_host,
+            model=model,
+            host=host,
             force=force,
         )
+        if records:
+            effective_model = records[0].model
         arm_summaries[str(value)] = build_summary(records)
 
     report_path = _write_comparison_report(
-        f"{name}{report_suffix}", spec["param"], arm_summaries, spec["hypothesis"], out_dir  # type: ignore[arg-type]
+        f"{name}{report_suffix}",
+        spec["param"],
+        arm_summaries,
+        spec["hypothesis"],
+        out_dir,
+        provider=provider,
+        model=effective_model,
     )
     print(f"Comparación escrita en {report_path}")
     return arm_summaries
@@ -170,37 +249,55 @@ def run_experiment_c(
     trials: int,
     scenarios_dir: Path = DEFAULT_SCENARIOS_DIR,
     out_dir: Path = DEFAULT_OUT_DIR,
-    ollama_model: str | None = None,
-    ollama_host: str | None = None,
+    model: str | None = None,
+    host: str | None = None,
     force: bool = False,
 ) -> dict[str, dict]:
-    """Experimento C (stretch): tools de M1 reales vs. no-op, sobre los 8
-    escenarios. Toggle de `harness_options`, no de `framework_config` —
-    manejado aparte de `run_experiment` porque cambia una dimensión distinta."""
-    scenario_paths = sorted(scenarios_dir.glob("*.json"))
+    """Experimento C: tools de M1 visibles vs. ausentes, sobre los 8 escenarios.
+
+    El arm ``visible`` reutiliza la configuración baseline. En ``absent``
+    `build_agent` no registra calculator/file_reader/word_counter, de modo que
+    tampoco aparecen en la lista de tools que recibe el LLM. Esto sí aísla la
+    hipótesis de distracción; reemplazar implementaciones por no-ops no lo hacía
+    porque el modelo veía exactamente los mismos schemas en ambos arms.
+    """
+    expected_ids = tuple(OPTIMAL_TOOL_CALLS)
+    scenario_paths = _scenario_paths_for_ids(expected_ids, scenarios_dir)
     arm_summaries: dict[str, dict] = {}
-    for label, noop in (("real", False), ("noop", True)):
+    effective_model = model
+    for label, register_m1_tools in (("visible", True), ("absent", False)):
         print(f"--- Experimento C: arm m1_tools={label} ---")
         framework_config = {"system_prompt": ESCAPE_ROOM_SYSTEM_PROMPT}
+        # Omitir la clave en el arm default conserva el hash histórico y
+        # permite reutilizar la corrida baseline ya válida.
+        if not register_m1_tools:
+            framework_config["register_m1_tools"] = False
         records = run_suite(
             scenario_paths,
             provider=provider,
             framework_config=framework_config,
             trials_per_scenario=trials,
             out_dir=out_dir,
-            noop_m1_tools=noop,
-            ollama_model=ollama_model,
-            ollama_host=ollama_host,
+            model=model,
+            host=host,
             force=force,
         )
-        arm_summaries[label] = build_summary(records)
+        if records:
+            effective_model = records[0].model
+        summary = build_summary(records)
+        m1_calls, trials_with_m1_calls = _m1_tool_call_stats(records)
+        summary["m1_tool_calls"] = m1_calls
+        summary["trials_with_m1_tool_calls"] = trials_with_m1_calls
+        arm_summaries[label] = summary
 
     report_path = _write_comparison_report(
         "C",
-        "m1_tools (real vs. noop)",
+        "m1_tools (visibles vs. ausentes)",
         arm_summaries,
-        "Tools de M1 irrelevantes en el prompt aumentan hallucinated_tool_or_args o bajan éxito.",
+        "Exponer tools de M1 irrelevantes aumenta elecciones equivocadas o baja el éxito.",
         out_dir,
+        provider=provider,
+        model=effective_model,
     )
     print(f"Comparación escrita en {report_path}")
     return arm_summaries
@@ -209,9 +306,9 @@ def run_experiment_c(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="eval.experiments")
     parser.add_argument("--which", choices=["A", "B", "C"], required=True)
-    parser.add_argument("--provider", choices=["auto", "ollama", "bedrock", "kimi"], default="ollama")
-    parser.add_argument("--ollama-model", default=None)
-    parser.add_argument("--ollama-host", default=None)
+    parser.add_argument("--provider", choices=list(PROVIDERS), default="ollama")
+    parser.add_argument("--model", default=None, help="Modelo (default del proveedor si se omite).")
+    parser.add_argument("--host", default=None, help="Override del host (solo Ollama).")
     parser.add_argument("--trials", type=int, default=5)
     parser.add_argument("--scenarios-dir", default=str(DEFAULT_SCENARIOS_DIR))
     parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR))
@@ -223,8 +320,8 @@ def main(argv: list[str] | None = None) -> int:
         trials=args.trials,
         scenarios_dir=Path(args.scenarios_dir),
         out_dir=Path(args.out_dir),
-        ollama_model=args.ollama_model,
-        ollama_host=args.ollama_host,
+        model=args.model,
+        host=args.host,
         force=args.force,
     )
     if args.which == "C":

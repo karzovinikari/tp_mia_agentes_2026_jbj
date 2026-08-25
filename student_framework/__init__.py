@@ -48,6 +48,11 @@ def build_agent(config: dict[str, Any] | None = None) -> Agent:
 
     agent = MyAgent(**kwargs)
 
+    # M3 usa esta bandera para una ablación real: cuando es False, las tools
+    # de M1 no se registran y por lo tanto tampoco aparecen en el prompt del
+    # modelo. El default sigue siendo True para conservar el contrato de M1.
+    register_m1_tools = config.get("register_m1_tools", True)
+
     # Registro de las tres herramientas obligatorias del M1. Cada par
     # (callable, schema) se importa de su módulo en tools/. El schema lo
     # genera ToolSchema.from_callable dentro de cada módulo.
@@ -55,8 +60,9 @@ def build_agent(config: dict[str, Any] | None = None) -> Agent:
     from student_framework.tools.file_reader import file_reader, file_reader_schema
     from student_framework.tools.word_counter import word_counter, word_counter_schema
 
-    agent.register_tool(calculator, calculator_schema)
-    agent.register_tool(file_reader, file_reader_schema)
-    agent.register_tool(word_counter, word_counter_schema)
+    if register_m1_tools:
+        agent.register_tool(calculator, calculator_schema)
+        agent.register_tool(file_reader, file_reader_schema)
+        agent.register_tool(word_counter, word_counter_schema)
 
     return agent

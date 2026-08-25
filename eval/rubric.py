@@ -48,13 +48,22 @@ def r2_no_loop(trial: TrialRecord) -> float | None:
     return 0.0 if any(c >= 2 for c in counts.values()) else 1.0
 
 
-def r3_no_hallucination(trial: TrialRecord) -> float:
-    """0.0 si algún step tiene error de tool desconocida o argumentos
-    inválidos — strings exactos que produce `MyAgent._execute_tool_call`."""
-    for step in _steps(trial):
+def r3_no_hallucination(trial: TrialRecord) -> float | None:
+    """0.0 si algún step tiene tool desconocida o argumentos mal formados.
+
+    Cubre JSON inválido y JSON válido que no coincide con la firma de la
+    herramienta. No intenta juzgar errores semánticos del mundo (por ejemplo,
+    probar una llave válida en la puerta equivocada).
+    """
+    steps = _steps(trial)
+    if trial.crashed and not steps:
+        return None
+    for step in steps:
         err = step.get("error")
         if err and (
-            err.startswith("Herramienta desconocida:") or err.startswith("Argumentos JSON inválidos:")
+            err.startswith("Herramienta desconocida:")
+            or err.startswith("Argumentos JSON inválidos:")
+            or err.startswith("Argumentos inválidos:")
         ):
             return 0.0
     return 1.0

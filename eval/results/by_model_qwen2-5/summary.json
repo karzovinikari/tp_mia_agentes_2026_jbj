@@ -1,0 +1,305 @@
+{
+  "generated_at": "2026-08-23T16:09:28",
+  "n_trials_total": 120,
+  "success_rate_micro": 0.058333333333333334,
+  "success_rate_macro": 0.13333333333333333,
+  "mean_efficiency_overall": 0.6928571428571428,
+  "rubric_overall": {
+    "rubric_score_mean": 0.9207638888888892,
+    "criteria_pass_rate": {
+      "R1_look_first": 1.0,
+      "R3_no_hallucination": 1.0,
+      "R2_no_loop": 0.7378640776699029,
+      "R5_efficiency": 0.6928571428571428,
+      "R4_sequence_order": 1.0
+    },
+    "criteria_applicable_n": {
+      "R1_look_first": 120,
+      "R3_no_hallucination": 120,
+      "R2_no_loop": 103,
+      "R5_efficiency": 7,
+      "R4_sequence_order": 24
+    },
+    "n_trials": 120
+  },
+  "error_breakdown_overall": {
+    "total_trials": 120,
+    "total_failures": 113,
+    "counts": {
+      "max_iterations_exhausted": 94,
+      "unclassified": 13,
+      "unrecovered_tool_error": 6
+    },
+    "pct_of_failures": {
+      "max_iterations_exhausted": 0.831858407079646,
+      "unclassified": 0.11504424778761062,
+      "unrecovered_tool_error": 0.05309734513274336
+    }
+  },
+  "by_scenario": {
+    "apartment-keys": {
+      "difficulty": "medium",
+      "n_trials": 15,
+      "success_rate": 0.0,
+      "mean_efficiency": null,
+      "mean_wall_time_s": 13.3306572027194,
+      "rubric": {
+        "rubric_score_mean": 0.9777777777777777,
+        "criteria_pass_rate": {
+          "R1_look_first": 1.0,
+          "R3_no_hallucination": 1.0,
+          "R2_no_loop": 0.9166666666666666
+        },
+        "criteria_applicable_n": {
+          "R1_look_first": 15,
+          "R3_no_hallucination": 15,
+          "R2_no_loop": 12
+        },
+        "n_trials": 15
+      },
+      "error_breakdown": {
+        "total_trials": 15,
+        "total_failures": 15,
+        "counts": {
+          "max_iterations_exhausted": 15
+        },
+        "pct_of_failures": {
+          "max_iterations_exhausted": 1.0
+        }
+      }
+    },
+    "backtracking-vault": {
+      "difficulty": "extreme",
+      "n_trials": 24,
+      "success_rate": 0.0,
+      "mean_efficiency": null,
+      "mean_wall_time_s": 29.43516394800584,
+      "rubric": {
+        "rubric_score_mean": 0.8194444444444445,
+        "criteria_pass_rate": {
+          "R1_look_first": 1.0,
+          "R2_no_loop": 0.4583333333333333,
+          "R3_no_hallucination": 1.0
+        },
+        "criteria_applicable_n": {
+          "R1_look_first": 24,
+          "R2_no_loop": 24,
+          "R3_no_hallucination": 24
+        },
+        "n_trials": 24
+      },
+      "error_breakdown": {
+        "total_trials": 24,
+        "total_failures": 24,
+        "counts": {
+          "max_iterations_exhausted": 22,
+          "unclassified": 2
+        },
+        "pct_of_failures": {
+          "max_iterations_exhausted": 0.9166666666666666,
+          "unclassified": 0.08333333333333333
+        }
+      }
+    },
+    "color-locks": {
+      "difficulty": "medium",
+      "n_trials": 15,
+      "success_rate": 0.06666666666666667,
+      "mean_efficiency": 0.5,
+      "mean_wall_time_s": 24.94881235299011,
+      "rubric": {
+        "rubric_score_mean": 0.9694444444444446,
+        "criteria_pass_rate": {
+          "R1_look_first": 1.0,
+          "R2_no_loop": 0.875,
+          "R3_no_hallucination": 1.0,
+          "R5_efficiency": 0.5
+        },
+        "criteria_applicable_n": {
+          "R1_look_first": 15,
+          "R2_no_loop": 8,
+          "R3_no_hallucination": 15,
+          "R5_efficiency": 1
+        },
+        "n_trials": 15
+      },
+      "error_breakdown": {
+        "total_trials": 15,
+        "total_failures": 14,
+        "counts": {
+          "max_iterations_exhausted": 11,
+          "unclassified": 1,
+          "unrecovered_tool_error": 2
+        },
+        "pct_of_failures": {
+          "max_iterations_exhausted": 0.7857142857142857,
+          "unclassified": 0.07142857142857142,
+          "unrecovered_tool_error": 0.14285714285714285
+        }
+      }
+    },
+    "extreme-archive": {
+      "difficulty": "extreme",
+      "n_trials": 6,
+      "success_rate": 0.0,
+      "mean_efficiency": null,
+      "mean_wall_time_s": 40.52200404834002,
+      "rubric": {
+        "rubric_score_mean": 0.7222222222222222,
+        "criteria_pass_rate": {
+          "R1_look_first": 1.0,
+          "R2_no_loop": 0.16666666666666666,
+          "R3_no_hallucination": 1.0
+        },
+        "criteria_applicable_n": {
+          "R1_look_first": 6,
+          "R2_no_loop": 6,
+          "R3_no_hallucination": 6
+        },
+        "n_trials": 6
+      },
+      "error_breakdown": {
+        "total_trials": 6,
+        "total_failures": 6,
+        "counts": {
+          "max_iterations_exhausted": 4,
+          "unclassified": 2
+        },
+        "pct_of_failures": {
+          "max_iterations_exhausted": 0.6666666666666666,
+          "unclassified": 0.3333333333333333
+        }
+      }
+    },
+    "library-search": {
+      "difficulty": "hard",
+      "n_trials": 6,
+      "success_rate": 0.0,
+      "mean_efficiency": null,
+      "mean_wall_time_s": 23.06673674300934,
+      "rubric": {
+        "rubric_score_mean": 1.0,
+        "criteria_pass_rate": {
+          "R1_look_first": 1.0,
+          "R2_no_loop": 1.0,
+          "R3_no_hallucination": 1.0
+        },
+        "criteria_applicable_n": {
+          "R1_look_first": 6,
+          "R2_no_loop": 6,
+          "R3_no_hallucination": 6
+        },
+        "n_trials": 6
+      },
+      "error_breakdown": {
+        "total_trials": 6,
+        "total_failures": 6,
+        "counts": {
+          "max_iterations_exhausted": 6
+        },
+        "pct_of_failures": {
+          "max_iterations_exhausted": 1.0
+        }
+      }
+    },
+    "office-sequence": {
+      "difficulty": "hard",
+      "n_trials": 24,
+      "success_rate": 0.0,
+      "mean_efficiency": null,
+      "mean_wall_time_s": 18.471635977524176,
+      "rubric": {
+        "rubric_score_mean": 0.9791666666666666,
+        "criteria_pass_rate": {
+          "R1_look_first": 1.0,
+          "R2_no_loop": 0.9130434782608695,
+          "R3_no_hallucination": 1.0,
+          "R4_sequence_order": 1.0
+        },
+        "criteria_applicable_n": {
+          "R1_look_first": 24,
+          "R2_no_loop": 23,
+          "R3_no_hallucination": 24,
+          "R4_sequence_order": 24
+        },
+        "n_trials": 24
+      },
+      "error_breakdown": {
+        "total_trials": 24,
+        "total_failures": 24,
+        "counts": {
+          "unclassified": 5,
+          "max_iterations_exhausted": 18,
+          "unrecovered_tool_error": 1
+        },
+        "pct_of_failures": {
+          "unclassified": 0.20833333333333334,
+          "max_iterations_exhausted": 0.75,
+          "unrecovered_tool_error": 0.041666666666666664
+        }
+      }
+    },
+    "study-with-key": {
+      "difficulty": "easy",
+      "n_trials": 6,
+      "success_rate": 1.0,
+      "mean_efficiency": 0.725,
+      "mean_wall_time_s": 10.665097638654212,
+      "rubric": {
+        "rubric_score_mean": 0.9083333333333333,
+        "criteria_pass_rate": {
+          "R1_look_first": 1.0,
+          "R3_no_hallucination": 1.0,
+          "R5_efficiency": 0.725
+        },
+        "criteria_applicable_n": {
+          "R1_look_first": 6,
+          "R3_no_hallucination": 6,
+          "R5_efficiency": 6
+        },
+        "n_trials": 6
+      },
+      "error_breakdown": {
+        "total_trials": 6,
+        "total_failures": 0,
+        "counts": {},
+        "pct_of_failures": {}
+      }
+    },
+    "vault-combination": {
+      "difficulty": "extreme",
+      "n_trials": 24,
+      "success_rate": 0.0,
+      "mean_efficiency": null,
+      "mean_wall_time_s": 18.906546385357313,
+      "rubric": {
+        "rubric_score_mean": 0.9305555555555557,
+        "criteria_pass_rate": {
+          "R1_look_first": 1.0,
+          "R2_no_loop": 0.7916666666666666,
+          "R3_no_hallucination": 1.0
+        },
+        "criteria_applicable_n": {
+          "R1_look_first": 24,
+          "R2_no_loop": 24,
+          "R3_no_hallucination": 24
+        },
+        "n_trials": 24
+      },
+      "error_breakdown": {
+        "total_trials": 24,
+        "total_failures": 24,
+        "counts": {
+          "max_iterations_exhausted": 18,
+          "unrecovered_tool_error": 3,
+          "unclassified": 3
+        },
+        "pct_of_failures": {
+          "max_iterations_exhausted": 0.75,
+          "unrecovered_tool_error": 0.125,
+          "unclassified": 0.125
+        }
+      }
+    }
+  }
+}

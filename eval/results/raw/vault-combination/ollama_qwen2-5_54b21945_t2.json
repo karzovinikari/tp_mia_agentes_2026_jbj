@@ -1,0 +1,90 @@
+{
+  "trial_id": "vault-combination__ollama__qwen2-5__54b21945__t2",
+  "scenario_id": "vault-combination",
+  "difficulty": "extreme",
+  "provider": "ollama",
+  "module": "student_framework",
+  "framework_config": {
+    "system_prompt": "Sos un agente que intenta escapar de una sala simulada. Tenés las herramientas look, examine, take, use (y go si hay navegación entre salas). Antes de actuar a ciegas, usá look para ver qué hay en la sala. No hay mapa: si navegás entre salas, llevá vos mismo la cuenta de dónde encontraste cada objeto para poder volver. Si el objetivo pide un orden (por ejemplo, llevarte algo ANTES de abrir una puerta que se sella), planificá ese orden antes de actuar, no lo improvises. Si una acción devuelve un error, no la repitas igual: leé el error y cambiá el argumento o el enfoque.",
+    "max_iterations": 21
+  },
+  "harness_options": {
+    "noop_m1_tools": false
+  },
+  "trial_index": 2,
+  "timestamp": "2026-08-23T16:50:42",
+  "wall_time_s": 14.112463249824941,
+  "crashed": false,
+  "crash_message": null,
+  "agent_result": {
+    "answer": " Parece que hay un bucle en las salidas, lo cual no es ideal. Vamos a intentar volver al vestíbulo y luego inspeccionar el taller.\n\nPrimero, vamos al sur (o al menos intentarlo para asegurarnos de que la salida está cerrada).\nSi no funciona, iremos al este.\n",
+    "steps": [
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Vestíbulo.\nUn vestíbulo de hormigón con un panel de seguridad junto a la puerta principal. El panel tiene tres ranuras vacías rotuladas 'NÚCLEO'. Un pasillo se abre al norte.\nVes:\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Galería central.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Galería central.\nUna galería que distribuye hacia varias salas: el taller al este, la biblioteca al oeste y, al norte, una puerta metálica de depósito que está cerrada.\nVes:\n  - puerta del depósito [id: puerta_deposito] (cerrada)\nSalidas: este, norte (bloqueada por puerta del depósito), oeste, sur.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"oeste\"}",
+        "tool_output": "Caminas hacia oeste. Llegas a Biblioteca.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Biblioteca.\nUna sala con estanterías y una vitrina de cristal cerrada con llave en el centro.\nVes:\n  - vitrina [id: vitrina] (cerrada)\nSalidas: este.",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"vitrina\"}",
+        "tool_output": "Error: vitrina no es algo que puedas llevarte.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"sur\"}",
+        "tool_output": "Error: no hay salida 'sur' desde aquí. Salidas disponibles: este.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"este\"}",
+        "tool_output": "Caminas hacia este. Llegas a Galería central.",
+        "error": null
+      }
+    ],
+    "error": null,
+    "input_tokens": 12856,
+    "output_tokens": 320
+  },
+  "tool_call_count": 8,
+  "optimal_calls": 21,
+  "goal": {
+    "type": "item_open",
+    "item": "puerta_principal"
+  },
+  "goal_achieved": false,
+  "goal_reason": "puerta principal está cerrada",
+  "model": "qwen2.5",
+  "event_log": [
+    "enter:vestibulo",
+    "enter:galeria",
+    "enter:biblioteca",
+    "enter:galeria"
+  ]
+}

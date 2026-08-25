@@ -20,6 +20,7 @@ if str(_REPO_ROOT) not in sys.path:
 from mia_world import list_scenarios, load_scenario  # noqa: E402
 
 from eval.prompts import SYSTEM_PROMPT_VARIANTS  # noqa: E402
+from eval.providers import PROVIDERS  # noqa: E402
 from eval.report import write_summary  # noqa: E402
 from eval.runner import run_suite  # noqa: E402
 
@@ -76,9 +77,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Id, dificultad, path .json, o 'all' (repetible; default: all).",
     )
-    parser.add_argument("--provider", choices=["auto", "ollama", "bedrock", "kimi"], default="auto")
-    parser.add_argument("--ollama-model", default=None, help="Override de OLLAMA_MODEL para este run.")
-    parser.add_argument("--ollama-host", default=None, help="Override de OLLAMA_HOST para este run.")
+    parser.add_argument("--provider", choices=list(PROVIDERS), default="auto")
+    parser.add_argument(
+        "--model",
+        default=None,
+        help=(
+            "Modelo a usar. Si se omite, el default del proveedor "
+            "(ollama: qwen2.5, openai: gpt-4o-mini). Queda registrado en cada trial."
+        ),
+    )
+    parser.add_argument("--host", default=None, help="Override del host (solo Ollama).")
     parser.add_argument("--trials", type=int, default=1, help="Trials por escenario (default: 1).")
     parser.add_argument("--max-iterations", type=int, default=None)
     parser.add_argument("--max-history-messages", type=int, default=None)
@@ -89,7 +97,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--module", default="student_framework")
     parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR))
-    parser.add_argument("--noop-m1-tools", action="store_true")
+    m1_group = parser.add_mutually_exclusive_group()
+    m1_group.add_argument(
+        "--noop-m1-tools",
+        action="store_true",
+        help="Modo legado: conserva los schemas pero reemplaza la ejecución por no-ops.",
+    )
+    m1_group.add_argument(
+        "--omit-m1-tools",
+        action="store_true",
+        help="No registra calculator/file_reader/word_counter (ablación C).",
+    )
     parser.add_argument("--force", action="store_true", help="Ignora el resume; re-corre todo.")
     parser.add_argument("--dry-run", action="store_true", help="Lista la matriz de trials sin llamar al LLM.")
     return parser
@@ -107,6 +125,8 @@ def main(argv: list[str] | None = None) -> int:
         framework_config["max_iterations"] = args.max_iterations
     if args.max_history_messages is not None:
         framework_config["max_history_messages"] = args.max_history_messages
+    if args.omit_m1_tools:
+        framework_config["register_m1_tools"] = False
 
     print(
         f"Evaluando {len(scenario_paths)} escenario(s) x {args.trials} trial(s) "
@@ -120,8 +140,8 @@ def main(argv: list[str] | None = None) -> int:
         out_dir=Path(args.out_dir),
         module=args.module,
         noop_m1_tools=args.noop_m1_tools,
-        ollama_model=args.ollama_model,
-        ollama_host=args.ollama_host,
+        model=args.model,
+        host=args.host,
         force=args.force,
         dry_run=args.dry_run,
     )

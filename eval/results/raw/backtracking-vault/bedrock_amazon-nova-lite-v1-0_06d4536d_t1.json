@@ -1,0 +1,200 @@
+{
+  "trial_id": "backtracking-vault__bedrock__amazon-nova-lite-v1-0__06d4536d__t1",
+  "scenario_id": "backtracking-vault",
+  "difficulty": "extreme",
+  "provider": "bedrock",
+  "module": "student_framework",
+  "framework_config": {
+    "system_prompt": "Sos un agente que intenta escapar de una sala simulada. Tenés las herramientas look, examine, take, use (y go si hay navegación entre salas). Antes de actuar a ciegas, usá look para ver qué hay en la sala. No hay mapa: si navegás entre salas, llevá vos mismo la cuenta de dónde encontraste cada objeto para poder volver. Si el objetivo pide un orden (por ejemplo, llevarte algo ANTES de abrir una puerta que se sella), planificá ese orden antes de actuar, no lo improvises. Si una acción devuelve un error, no la repitas igual: leé el error y cambiá el argumento o el enfoque.",
+    "max_iterations": 25
+  },
+  "harness_options": {
+    "noop_m1_tools": false
+  },
+  "trial_index": 1,
+  "timestamp": "2026-08-23T16:05:36",
+  "wall_time_s": 20.88671829085797,
+  "crashed": false,
+  "crash_message": null,
+  "agent_result": {
+    "answer": "",
+    "steps": [
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Entrada de la bóveda.\nUna antesala con la puerta principal de salida y un cofre antiguo de hierro contra la pared. Al norte hay un corredor.\nVes:\n  - cofre antiguo [id: cofre_antiguo] (cerrada)\n  - puerta principal [id: puerta_principal] (cerrada)\nSalidas: norte.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Sala A.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Sala A.\nUna sala con un escritorio cubierto de papeles. Al norte hay una puerta blindada cerrada.\nVes:\n  - escritorio [id: escritorio]\n  - puerta blindada [id: puerta_blindada] (cerrada)\nSalidas: norte (bloqueada por puerta blindada), sur.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"escritorio\"}",
+        "tool_output": "escritorio: Un escritorio con cajones. Dentro hay una llave y papeles inútiles.\nContiene:\n  - llave intermedia [id: llave_intermedia]",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Error: el paso hacia norte está bloqueado por puerta blindada. Tenés que abrirla primero.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"llave_intermedia\"}",
+        "tool_output": "llave intermedia: Una llave de acero con la etiqueta 'B-1'. Parece de una puerta blindada.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"llave_intermedia\", \"target\": \"puerta_blindada\"}",
+        "tool_output": "Error: no llevas ningún 'llave_intermedia'.",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"llave_intermedia\"}",
+        "tool_output": "Tomas llave intermedia.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"llave_intermedia\", \"target\": \"puerta_blindada\"}",
+        "tool_output": "Usas llave intermedia con puerta blindada. Se abre.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Sala B.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Sala B.\nUna sala intermedia con un armario metálico y, al norte, una reja cerrada que da al fondo.\nVes:\n  - armario metálico [id: armario]\n  - cofre pequeño [id: cofre_vacio]\n  - reja [id: reja] (cerrada)\nSalidas: norte (bloqueada por reja), sur.\nLlevas: llave intermedia [id: llave_intermedia].",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"armario\"}",
+        "tool_output": "armario metálico: Un armario alto. Dentro cuelga una llave grande.\nContiene:\n  - llave de la reja [id: llave_boveda]",
+        "error": null
+      },
+      {
+        "tool_name": "take",
+        "tool_input": "{\"item\": \"llave_boveda\"}",
+        "tool_output": "Tomas llave de la reja.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"sur\"}",
+        "tool_output": "Caminas hacia sur. Llegas a Sala A.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"sur\"}",
+        "tool_output": "Caminas hacia sur. Llegas a Entrada de la bóveda.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"llave_boveda\", \"target\": \"cofre_antiguo\"}",
+        "tool_output": "Intentas usar llave de la reja con cofre antiguo, pero no encaja.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"cofre_antiguo\"}",
+        "tool_output": "cofre antiguo: Un cofre de hierro con una cerradura corroída. Necesita una llave oxidada que encaje en su mecanismo viejo.\nEstá cerrado con llave. No puedes ver el interior hasta abrirlo.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"llave_boveda\"}",
+        "tool_output": "llave de la reja: Una llave grande y dentada, del tipo de una reja pesada.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Sala A.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Sala B.",
+        "error": null
+      },
+      {
+        "tool_name": "examine",
+        "tool_input": "{\"target\": \"armario\"}",
+        "tool_output": "armario metálico: Un armario alto. Dentro cuelga una llave grande.\nEstá vacío.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Error: el paso hacia norte está bloqueado por reja. Tenés que abrirla primero.",
+        "error": null
+      },
+      {
+        "tool_name": "use",
+        "tool_input": "{\"item\": \"llave_boveda\", \"target\": \"reja\"}",
+        "tool_output": "Usas llave de la reja con reja. Se abre.",
+        "error": null
+      },
+      {
+        "tool_name": "go",
+        "tool_input": "{\"direction\": \"norte\"}",
+        "tool_output": "Caminas hacia norte. Llegas a Bóveda interior.",
+        "error": null
+      },
+      {
+        "tool_name": "look",
+        "tool_input": "{}",
+        "tool_output": "Estás en Bóveda interior.\nLa sala más profunda. Una caja de seguridad empotrada en la pared, sin cerradura visible.\nVes:\n  - caja de seguridad [id: caja_seguridad]\nSalidas: sur.\nLlevas: llave intermedia [id: llave_intermedia], llave de la reja [id: llave_boveda].",
+        "error": null
+      }
+    ],
+    "error": "Se alcanzó el límite de 25 iteraciones sin respuesta final.",
+    "input_tokens": 72136,
+    "output_tokens": 1439
+  },
+  "tool_call_count": 25,
+  "optimal_calls": 18,
+  "goal": {
+    "type": "item_open",
+    "item": "puerta_principal"
+  },
+  "goal_achieved": false,
+  "goal_reason": "puerta principal está cerrada",
+  "model": "amazon.nova-lite-v1:0",
+  "event_log": [
+    "enter:entrada",
+    "enter:sala_a",
+    "take:llave_intermedia",
+    "open:puerta_blindada",
+    "enter:sala_b",
+    "take:llave_boveda",
+    "enter:sala_a",
+    "enter:entrada",
+    "enter:sala_a",
+    "enter:sala_b",
+    "open:reja",
+    "enter:boveda"
+  ]
+}
